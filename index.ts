@@ -23,6 +23,20 @@ class incomingBus{
     }
 }
 
+class BusStop {
+    id: string
+    commonName: string
+    distance: number
+    towards: string
+
+    constructor(row: any) {
+        this.id = row.id
+        this.commonName = row.commonName
+        this.distance = row.distance
+        this.towards = row.additionalProperties[1].value
+    }
+}
+
 const postcode = myPrompt("Postcode: ")
 
 getStopID(postcode);
@@ -37,17 +51,41 @@ function getStopID(postcode: string) {
             const longitude = response.data.result["longitude"];
             const latitude = response.data.result["latitude"];
             console.log(longitude, latitude)
-            // TODO - getStopIDs
-            //getStopIDs(longitude, latitude);
+            getStopIDsFromCoords(latitude, longitude)
         })
 
 };
 
+function getStopIDsFromCoords(lat: number, lon: number, radius: number = 200) {
+    let requestURL = `https://api.tfl.gov.uk/StopPoint/?lat=${lat}&lon=${lon}&stopTypes=NaptanPublicBusCoachTram&radius=${radius}`
+    let busStops: BusStop[] = []
+    axios.get(requestURL)
+        .then((response) => {
+            // console.log(response.data);
+            busStops = response.data.stopPoints.map((eachStopData: any) => {
+                return new BusStop(eachStopData)
+            })
+
+            if (busStops.length < 2) {
+                getStopIDsFromCoords(lat, lon, radius+100)
+            } else {
+                busStops.sort(function (lhs, rhs) {
+                    return lhs.distance - rhs.distance
+                })
+                const nearestStops = busStops.slice(0, 2)
+                console.log(nearestStops)
+
+                // nearestStops.forEach(stop => {
+                //     console.log(`At ${stop.commonName}, the next buses are:`)
+                //     getBuses(stop.id, 5)
+                // })
+            }
+        })
+}
 
 // const stopID = myPrompt('Stop ID: ');
 // const stopID = '490008660N'
-function getBuses(stopID: string) {
-
+function getBuses(stopID: string, num: number) {
     const requestURL = `https://api.tfl.gov.uk/StopPoint/${stopID}/Arrivals`
     const incomingBuses: incomingBus[] = [];
     axios.get(requestURL)
@@ -61,7 +99,7 @@ function getBuses(stopID: string) {
             incomingBuses.sort(function (lhs, rhs) {
                 return lhs.arrivalTime.toMillis() - rhs.arrivalTime.toMillis()
             })
-            console.log(incomingBuses.slice(0, 5).toString())
+            console.log(incomingBuses.slice(0, num).toString())
         });
 }
 
