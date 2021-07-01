@@ -18,7 +18,12 @@
   },
   "homepage": "https://github.com/PhoebeJackson/SoftwireBusBoard#readme",
   "devDependencies": {
+    "@types/node": "^15.12.5",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "prompt-sync": "^4.2.0"
   }
 }
