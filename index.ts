@@ -2,6 +2,9 @@ const myPrompt = require('prompt-sync')();
 import axios from 'axios';
 import {DateTime} from "luxon";
 
+//TODO - get long and lat, get nearest ID, call our already function
+
+
 class incomingBus{
     route: string;
     destination: string;
@@ -20,21 +23,45 @@ class incomingBus{
     }
 }
 
-const stopID = myPrompt('Stop ID: ');
-// const stopID = '490008660N'
-const requestURL = `https://api.tfl.gov.uk/StopPoint/${stopID}/Arrivals`
-const incomingBuses: incomingBus[] = [];
-axios.get(requestURL)
-    .then((response) => {
-        // console.log(response.data);
-        response.data.forEach((element: any) => {
-            let bus = new incomingBus(element);
-            incomingBuses.push(bus);
+const postcode = myPrompt("Postcode: ")
+
+getStopID(postcode);
+
+function getStopID(postcode: string) {
+    let requestURL = `https://api.postcodes.io/postcodes/${postcode}`
+    axios.get(requestURL)
+        .then((response) => {
+            // console.log(response.data);
+            console.log(response.data);
+            // get coordinates
+            const longitude = response.data.result["longitude"];
+            const latitude = response.data.result["latitude"];
+            console.log(longitude, latitude)
+            // TODO - getStopIDs
+            //getStopIDs(longitude, latitude);
         })
 
-        incomingBuses.sort(function(lhs, rhs) {
-            return lhs.arrivalTime.toMillis() - rhs.arrivalTime.toMillis()
-        })
-        console.log(incomingBuses.slice(0, 5).toString())
-    });
+};
+
+
+// const stopID = myPrompt('Stop ID: ');
+// const stopID = '490008660N'
+function getBuses(stopID: string) {
+
+    const requestURL = `https://api.tfl.gov.uk/StopPoint/${stopID}/Arrivals`
+    const incomingBuses: incomingBus[] = [];
+    axios.get(requestURL)
+        .then((response) => {
+            // console.log(response.data);
+            response.data.forEach((element: any) => {
+                let bus = new incomingBus(element);
+                incomingBuses.push(bus);
+            })
+
+            incomingBuses.sort(function (lhs, rhs) {
+                return lhs.arrivalTime.toMillis() - rhs.arrivalTime.toMillis()
+            })
+            console.log(incomingBuses.slice(0, 5).toString())
+        });
+}
 
