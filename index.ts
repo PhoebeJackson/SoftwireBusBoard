@@ -48,21 +48,46 @@ class BusStop {
 }
 
 // main("NW51TL");
-APIRequest()
+const app = express()
+const port = 3000
+APIRequest(app, port)
+disruptionAPI(app, port)
 
-function APIRequest() {
-    const app = express()
-    const port = 3000
+function APIRequest(app: express.Express, port: number) {
     app.get('/departureBoards', async function(req, res) {
         const postcodeStr: string = String(req.query.postcode)
         let JSON = await main(postcodeStr)
-
         res.send(JSON)
     })
     app.use('/frontend', express.static('frontend'));
     app.listen(port, () => {
         console.log(`Departure boards app listening at http://localhost:${port}`)
     })
+}
+
+function disruptionAPI(app: express.Express, port: number) {
+    app.get('/disruptionsBlog', async function(req, res) {
+        const postcodeStr: string = String(req.query.postcode)
+        let JSON = await mainDisruption(postcodeStr)
+        res.send(JSON)
+    })
+    app.use('/frontend', express.static('frontend'))
+}
+
+async function mainDisruption(postcode: string){
+    let ourJSON: {[key: string]: {}[]} = {}
+    try {
+        const [longitude, latitude] = await getCoords(postcode)
+        const nearestStops = await getStopsFromCoords(latitude, longitude)
+        for (const stop of nearestStops) {
+            // TODO - call new API and add to ourJSON
+        }
+        return ourJSON
+    } catch {
+        console.log('catch in main')
+        ourJSON['error'] = [{'message': 'Something happened'}]
+        return ourJSON
+    }
 }
 
 async function main(postcode: string) {

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Disruptions Blog</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="disruptions.js"></script>
+</head>
+<body>
+<a href="index.html">Find a bus stop!</a>
+<form action="javascript:void(0)" onsubmit="onEnterPostcode();">
+  Postcode:<br>
+  <input type="text" name="postcode" id="postcode">
+  <input type="submit" value="Submit">
+</form>
+
+<!---->
+<!--html to accept postcode-->
+<!--get stops near the postcode-->
+<!--get disruptions for those stops-->
+<!--show disruption details-->
+
+<div id="results">
+  <h2>Disruptions</h2>
+  <h3 id="stop1">Example stop 1</h3>
+  <ul id="list1">
+    <!--        <li>2 minutes: 123 to Example Street</li>-->
+    <!--        <li>3 minutes: 456 to Fantasy Land</li>-->
+  </ul>
+  <h3 id="stop2">Example stop 2</h3>
+  <ul id="list2">
+    <!--        <li>1 minute: 123 to Example Street</li>-->
+    <!--        <li>4 minutes: 456 to Fantasy Land</li>-->
+  </ul>
+</div>
+
+</body>
+</html>
