@@ -59,6 +59,7 @@ function APIRequest() {
 
         res.send(JSON)
     })
+    app.use('/frontend', express.static('frontend'));
     app.listen(port, () => {
         console.log(`Departure boards app listening at http://localhost:${port}`)
     })
