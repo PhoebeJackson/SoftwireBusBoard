@@ -1,6 +1,21 @@
 const myPrompt = require('prompt-sync')();
 import axios from 'axios';
 import {DateTime} from "luxon";
+import express from 'express';
+
+const app = express()
+const port = 3000
+app.get('/', (req, res) => {
+    res.send('Hello World!')
+})
+app.get('/departureBoards', (req, res) => {
+    const postcodeStr = req.query.postcode
+    res.send(postcodeStr)
+})
+
+app.listen(port, () => {
+    console.log(`Example app listening at http://localhost:${port}`)
+})
 
 class incomingBus {
     route: string;
@@ -37,10 +52,10 @@ class BusStop {
     }
 }
 
-main();
+// main();
 
-async function main() {
-    const postcode = myPrompt("Postcode: ")
+async function main(postcode: string) {
+    // const postcode = myPrompt("Postcode: ")
     const [longitude, latitude] = await getCoords(postcode)
     const nearestStops = await getStopsFromCoords(latitude, longitude)
     for (const stop of nearestStops) {
