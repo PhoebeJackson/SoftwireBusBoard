@@ -56,6 +56,7 @@ function APIRequest() {
     app.get('/departureBoards', async function(req, res) {
         const postcodeStr: string = String(req.query.postcode)
         let JSON = await main(postcodeStr)
+
         res.send(JSON)
     })
     app.listen(port, () => {
@@ -64,23 +65,33 @@ function APIRequest() {
 }
 
 async function main(postcode: string) {
-    // const postcode = myPrompt("Postcode: ")
     let ourJSON: {[key: string]: {}[]} = {}
-    const [longitude, latitude] = await getCoords(postcode)
-    const nearestStops = await getStopsFromCoords(latitude, longitude)
-    for (const stop of nearestStops) {
-        const incomingBuses = await getBuses(stop.id, 5);
-        ourJSON[stop.commonName] = incomingBuses.map( (each: incomingBus) => {return each.toJSON()})
+    try {
+        const [longitude, latitude] = await getCoords(postcode)
+        const nearestStops = await getStopsFromCoords(latitude, longitude)
+        for (const stop of nearestStops) {
+            const incomingBuses = await getBuses(stop.id, 5);
+            ourJSON[stop.commonName] = incomingBuses.map( (each: incomingBus) => {return each.toJSON()})
+        }
+        return ourJSON
+    } catch {
+        console.log('catch in main')
+        ourJSON['error'] = [{'message': 'Something happened'}]
+        return ourJSON
     }
-    return ourJSON
 }
 
 async function getCoords(postcode: string) {
     let requestURL = `https://api.postcodes.io/postcodes/${postcode}`
-    const response = await axios.get(requestURL)
-    const longitude = response.data.result["longitude"];
-    const latitude = response.data.result["latitude"];
-    return [longitude, latitude]
+    try {
+        const response = await axios.get(requestURL)
+        const longitude = response.data.result["longitude"];
+        const latitude = response.data.result["latitude"];
+        return [longitude, latitude]
+    } catch {
+        console.log(postcode)
+        throw Error('post code is not valid?')
+    }
 }
 
 async function getStopsFromCoords(lat: number, lon: number, radius: number = 200): Promise<BusStop[]> {
