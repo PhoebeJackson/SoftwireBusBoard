@@ -3,20 +3,6 @@ import axios from 'axios';
 import {DateTime} from "luxon";
 import express from 'express';
 
-const app = express()
-const port = 3000
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
-app.get('/departureBoards', (req, res) => {
-    const postcodeStr = req.query.postcode
-    res.send(postcodeStr)
-})
-
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
-})
-
 class incomingBus {
     route: string;
     destination: string;
@@ -28,13 +14,22 @@ class incomingBus {
         this.arrivalTime = DateTime.fromISO(row.expectedArrival)
     }
 
-    toString() {
+    minutes() {
         let minutes = this.arrivalTime.diff(DateTime.now(), 'minutes').minutes
         minutes = Math.round(minutes)
         if (minutes < 0) {
             minutes = 0
         }
+        return minutes
+    }
+
+    toString() {
+        let minutes = this.minutes()
         return `\nRoute ${this.route} bus heading to ${this.destination} is expected in: ${minutes} mins`
+    }
+
+    toJSON(){
+        return {route: this.route, minutesToArrival: this.minutes(), destination: this.destination}
     }
 }
 
@@ -52,17 +47,32 @@ class BusStop {
     }
 }
 
-// main();
+// main("NW51TL");
+APIRequest()
+
+function APIRequest() {
+    const app = express()
+    const port = 3000
+    app.get('/departureBoards', async function(req, res) {
+        const postcodeStr: string = String(req.query.postcode)
+        let JSON = await main(postcodeStr)
+        res.send(JSON)
+    })
+    app.listen(port, () => {
+        console.log(`Departure boards app listening at http://localhost:${port}`)
+    })
+}
 
 async function main(postcode: string) {
     // const postcode = myPrompt("Postcode: ")
+    let ourJSON: {[key: string]: {}[]} = {}
     const [longitude, latitude] = await getCoords(postcode)
     const nearestStops = await getStopsFromCoords(latitude, longitude)
     for (const stop of nearestStops) {
-        console.log(`\nThe next buses into ${stop.commonName} are:`)
         const incomingBuses = await getBuses(stop.id, 5);
-        console.log(incomingBuses.toString())
+        ourJSON[stop.commonName] = incomingBuses.map( (each: incomingBus) => {return each.toJSON()})
     }
+    return ourJSON
 }
 
 async function getCoords(postcode: string) {
