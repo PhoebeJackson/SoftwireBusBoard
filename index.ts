@@ -48,21 +48,48 @@ class BusStop {
 }
 
 // main("NW51TL");
-APIRequest()
+const app = express()
+const port = 3000
+app.listen(port, () => {
+    console.log(`Departure boards app listening at http://localhost:${port}`)
+})
+app.use('/frontend', express.static('frontend'));
+APIRequest(app)
+disruptionAPI(app)
 
-function APIRequest() {
-    const app = express()
-    const port = 3000
+function APIRequest(app: express.Express) {
     app.get('/departureBoards', async function(req, res) {
         const postcodeStr: string = String(req.query.postcode)
         let JSON = await main(postcodeStr)
-
         res.send(JSON)
     })
-    app.use('/frontend', express.static('frontend'));
-    app.listen(port, () => {
-        console.log(`Departure boards app listening at http://localhost:${port}`)
+}
+
+function disruptionAPI(app: express.Express) {
+    app.get('/disruptionsBlog', async function(req, res) {
+        const postcodeStr: string = String(req.query.postcode)
+        let JSON = await mainDisruption(postcodeStr)
+        res.send(JSON)
     })
+}
+
+async function mainDisruption(postcode: string): Promise<{}> {
+    let ourJSON: {[key: string]: {}[]} = {}
+    try {
+        let requestURL = `https://api.tfl.gov.uk/Line/Mode/bus/Disruption`
+        const response = await axios.get(requestURL)
+        // console.log(response)
+        const disruptions = response.data
+        const disruptionStrings = disruptions.map((disrup: any) => {
+            const desc: string = disrup.description
+            const lastUpdate: string = disrup.lastUpdate
+            const disruptionStr = `${desc}. Last updated: ${lastUpdate}`
+            return disruptionStr
+        })
+        return { "strings": disruptionStrings}
+    } catch {
+        return {"string": ['Error happened bro']}
+    }
 }
 
 async function main(postcode: string) {
@@ -95,19 +122,19 @@ async function getCoords(postcode: string) {
     }
 }
 
-async function getStopsFromCoords(lat: number, lon: number, radius: number = 200): Promise<BusStop[]> {
+async function getStopsFromCoords(lat: number, lon: number, radius: number = 200, num: number = 2): Promise<BusStop[]> {
     let requestURL = `https://api.tfl.gov.uk/StopPoint/?lat=${lat}&lon=${lon}&stopTypes=NaptanPublicBusCoachTram&radius=${radius}`
     const response = await axios.get(requestURL)
     let busStops: BusStop[] = response.data.stopPoints.map((eachStopData: any) => {
         return new BusStop(eachStopData)
     })
-    if (busStops.length < 2) {
+    if (busStops.length < num) {
         return await getStopsFromCoords(lat, lon, radius + 100)
     } else {
         busStops.sort(function (lhs: BusStop, rhs: BusStop) {
             return lhs.distance - rhs.distance
         })
-        return busStops.slice(0, 2)
+        return busStops.slice(0, num)
     }
 }
 
