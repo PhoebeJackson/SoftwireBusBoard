@@ -57,29 +57,26 @@ disruptionAPI(app)
 function APIRequest(app: express.Express) {
     app.get('/departureBoards', async function(req, res) {
         const postcodeStr: string = String(req.query.postcode)
-        const JSON = await main(postcodeStr)
+        const JSON = await getIncomingBusesFromPostcode(postcodeStr)
         res.send(JSON)
     })
 }
 
 function disruptionAPI(app: express.Express) {
     app.get('/disruptionsBlog', async function(req, res) {
-        const postcodeStr: string = String(req.query.postcode)
-        const JSON = await mainDisruption(postcodeStr)
+        const JSON = await getDisruptions()
         res.send(JSON)
     })
 }
 
-async function mainDisruption(postcode: string): Promise<{}> {
-    let ourJSON: {[key: string]: {}[]} = {}
+async function getDisruptions(): Promise<{}> {
     try {
         let requestURL = `https://api.tfl.gov.uk/Line/Mode/bus/Disruption`
         const response = await axios.get(requestURL)
-        // console.log(response)
         const disruptions = response.data
-        const disruptionStrings = disruptions.map((disrup: any) => {
-            const desc: string = disrup.description
-            const lastUpdate: string = disrup.lastUpdate
+        const disruptionStrings = disruptions.map((disruption: any) => {
+            const desc: string = disruption.description
+            const lastUpdate: string = disruption.lastUpdate
             const disruptionStr = `${desc}. Last updated: ${lastUpdate}`
             return disruptionStr
         })
@@ -89,7 +86,7 @@ async function mainDisruption(postcode: string): Promise<{}> {
     }
 }
 
-async function main(postcode: string) {
+async function getIncomingBusesFromPostcode(postcode: string) {
     let ourJSON: {[key: string]: {}[]} = {}
     try {
         const [longitude, latitude] = await getCoords(postcode)
@@ -99,9 +96,8 @@ async function main(postcode: string) {
             ourJSON[stop.commonName] = incomingBuses.map( (each: IncomingBus) => {return each.toJSON()})
         }
         return ourJSON
-    } catch {
-        console.log('catch in main')
-        ourJSON['error'] = [{'message': 'Something happened'}]
+    } catch (error) {
+        ourJSON['error'] = [{'message': error}]
         return ourJSON
     }
 }
@@ -115,7 +111,7 @@ async function getCoords(postcode: string) {
         return [longitude, latitude]
     } catch(error) { //TODO - do something with this error message from the API
         console.log(postcode)
-        throw Error('post code is not valid?')
+        throw Error(`This postcode caused this error: ${error}`)
     }
 }
 
@@ -137,11 +133,10 @@ async function getStopsFromCoords(lat: number, lon: number, radius: number = 200
 
 async function getBuses(stopID: string, num: number) {
     const requestURL = `https://api.tfl.gov.uk/StopPoint/${stopID}/Arrivals`
-    const incomingBuses: IncomingBus[] = [];
     const response = await axios.get(requestURL)
-    response.data.forEach((element: any) => { //TODO - make this a map
+    const incomingBuses: IncomingBus[] = response.data.map((element: any) => {
         let bus = new IncomingBus(element);
-        incomingBuses.push(bus);
+        return bus
     })
     incomingBuses.sort(function (lhs, rhs) {
         return lhs.arrivalTime.toMillis() - rhs.arrivalTime.toMillis()
