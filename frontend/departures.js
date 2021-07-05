@@ -28,10 +28,12 @@ function showResults(response) {
         resultSection.appendChild(stopName)
 
         var list = document.createElement('ul')
+        list.className = "list-group"
         var buses = jsonObj[stop]
         buses.forEach(bus => {
             var listElem = document.createElement('li')
             listElem.innerHTML = bus2string(bus)
+            listElem.className = "list-group-item"
             list.appendChild(listElem)
         })
 

@@ -76,8 +76,8 @@ async function getDisruptions(): Promise<{}> {
         const disruptions = response.data
         const disruptionStrings = disruptions.map((disruption: any) => {
             const desc: string = disruption.description
-            const lastUpdate: string = disruption.lastUpdate
-            const disruptionStr = `${desc}. Last updated: ${lastUpdate}`
+            const lastUpdate: DateTime = DateTime.fromISO(disruption.lastUpdate)
+            const disruptionStr = `${lastUpdate.toLocaleString(DateTime.DATETIME_MED)}<br>${desc}.`
             return disruptionStr
         })
         return { "strings": disruptionStrings}
