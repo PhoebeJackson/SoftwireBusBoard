@@ -13,10 +13,7 @@ function onEnterPostcode() {
 
 function showResults(response) {
     var jsonObj = JSON.parse(response)
-    var stopNames = []
-    for (var stop in jsonObj) {
-        stopNames.push(stop)
-    }
+
 
     var resultSection = document.getElementById('results')
     resultSection.innerHTML = ''
