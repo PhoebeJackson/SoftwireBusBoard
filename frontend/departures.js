@@ -17,23 +17,29 @@ function showResults(response) {
     for (var stop in jsonObj) {
         stopNames.push(stop)
     }
-    document.getElementById('stop1').innerHTML = stopNames[0]
-    document.getElementById('stop2').innerHTML = stopNames[1]
-    var list1 = document.getElementById('list1')
-    var buses1 = jsonObj[stopNames[0]]
-    buses1.forEach(bus => {
-        var listElem = document.createElement('li')
-        listElem.innerHTML = bus2string(bus)
-        list1.appendChild(listElem)
-    })
 
-    var list2 = document.getElementById('list2')
-    var buses2 = jsonObj[stopNames[1]]
-    buses2.forEach(bus => {
-        var listElem = document.createElement('li')
-        listElem.innerHTML = bus2string(bus)
-        list2.appendChild(listElem)
-    })
+    var resultSection = document.getElementById('results')
+    resultSection.innerHTML = ''
+
+    var resultsHeader = document.createElement('h2')
+    resultsHeader.innerHTML = 'Results'
+    resultSection.appendChild(resultsHeader)
+
+    for (var stop in jsonObj) {
+        var stopName = document.createElement('h3')
+        stopName.innerHTML = `${stop}:`
+        resultSection.appendChild(stopName)
+
+        var list = document.createElement('ul')
+        var buses = jsonObj[stop]
+        buses.forEach(bus => {
+            var listElem = document.createElement('li')
+            listElem.innerHTML = bus2string(bus)
+            list.appendChild(listElem)
+        })
+
+        resultSection.appendChild(list)
+    }
 }
 
 function bus2string(bus) {
